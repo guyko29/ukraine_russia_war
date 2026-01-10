@@ -7,3 +7,4 @@ torch
 huggingface_hub
 accelerate
 dotenv
+pycountry
