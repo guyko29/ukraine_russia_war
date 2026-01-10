@@ -9,8 +9,8 @@ if __name__ == "__main__":
     huggingface_token = os.getenv("HUGGINGFACE_TOKEN")
 
     print("Generating features for Ukraine...")
-    ukraine_features = GenerateFeatures("Ukraine", huggingface_token).generate_features()
+    ukraine_helper_dict = GenerateFeatures("Ukraine", huggingface_token).generate_features()
 
     print("Generating features for Russia...")
-    russia_features = GenerateFeatures("Russia", huggingface_token).generate_features()
+    russia_helper_dict = GenerateFeatures("Russia", huggingface_token, ukraine_helper_dict).generate_features()
 
