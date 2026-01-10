@@ -32,9 +32,56 @@ class GenerateFeatures:
 
         helper_dictionary.update(helper_dict)
 
-        self.feature_cleaner = FeatureCleaner(self.df, CLEAN_FEATURES)
         self.translator = Translator(self.df, NEED_TRANSLATION)
         self.location_classifier = ClassifyLocation(df=self.df, token=token, helper_dict=helper_dictionary)
+
+    def _filter_out_known_usernames(self) -> pd.DataFrame:
+        """
+        Return a copy of df excluding rows whose `user_name` exists in all_user_name.xlsx.
+        If the file or `user_name` column is missing, returns df unchanged.
+        """
+        project_dir = Path(__file__).resolve().parent
+        allowed_file = project_dir / "all_user_name.xlsx"
+        try:
+            known_df = pd.read_excel(allowed_file)
+        except Exception:
+            return self.df
+        if "user_name" not in self.df.columns or "user_name" not in known_df.columns:
+            return self.df
+        known_usernames = set(known_df["user_name"].dropna().astype(str))
+        filtered = self.df.copy()
+        filtered = filtered[~filtered["user_name"].astype(str).isin(known_usernames)]
+        return filtered
+
+    def add_usernames_to_all_user_name(self) -> int:
+        """
+        Append all user_name values from self.df into all_user_name.xlsx (deduplicated).
+        Returns the number of newly added usernames.
+        If self.df lacks `user_name`, no changes are made and 0 is returned.
+        """
+        if "user_name" not in self.df.columns:
+            return 0
+        project_dir = Path(__file__).resolve().parent
+        allowed_file = project_dir / "all_user_name.xlsx"
+        try:
+            existing_df = pd.read_excel(allowed_file)
+        except Exception:
+            existing_df = pd.DataFrame({"user_name": []})
+        if "user_name" not in existing_df.columns:
+            existing_df["user_name"] = pd.Series(dtype=str)
+
+        existing_set = set(existing_df["user_name"].dropna().astype(str))
+        current_set = set(self.df["user_name"].dropna().astype(str))
+        to_add = sorted(current_set - existing_set)
+
+        if not to_add:
+            return 0
+
+        append_df = pd.DataFrame({"user_name": to_add})
+        final_df = pd.concat([existing_df[["user_name"]], append_df], ignore_index=True)
+        final_df.drop_duplicates(subset=["user_name"], inplace=True)
+        final_df.to_excel(allowed_file, index=False)
+        return len(to_add)
 
 
     def _filter_by_label_criteria(self, criteria: str) -> pd.DataFrame:
@@ -118,11 +165,27 @@ class GenerateFeatures:
         output_dir = project_dir / "Outputs" / self.country
         output_dir.mkdir(parents=True, exist_ok=True)
         excel_path = output_dir / f"{self.country}_{criteria}.xlsx"
-        df.to_excel(excel_path, index=False)
+        if excel_path.exists():
+            try:
+                existing_df = pd.read_excel(excel_path)
+            except Exception:
+                existing_df = pd.DataFrame()
+            final_df = pd.concat([existing_df, df], ignore_index=True)
+        else:
+            final_df = df
+        final_df.to_excel(excel_path, index=False)
 
 
-    def generate_features(self):
+    def generate_features(self) -> dict:
+        print("Filtering out known users...")
+        self.df = self._filter_out_known_usernames()
+        if self.df.empty:
+            print("No users to process after filtering known usernames. Skipping pipeline.")
+            return {}
+
         print("Cleaning features...")
+        # Ensure cleaner uses the current (filtered) DataFrame
+        self.feature_cleaner = FeatureCleaner(self.df, CLEAN_FEATURES)
         self.df = self.feature_cleaner.clean()
 
         print(f"Generating features for {self.country}...")
@@ -144,5 +207,8 @@ class GenerateFeatures:
         self._create_xlsx_file(df_filtered_local, "local")
         self._create_xlsx_file(df_filtered_nationality, "nationality")
         self._create_xlsx_file(df_filtered_private, "private")
+
+        print("Adding usernames to all_user_name.xlsx...")
+        self.add_usernames_to_all_user_name()
 
         return helper_dict
