@@ -39,7 +39,6 @@ class ClassifyLocation:
             return "none"
         
         if location_text in self.helper_dict:
-            print(f"Location {location_text} found in helper dictionary and classified as {self.helper_dict[location_text]}")
             self.counter_in_helper_dict += 1
             return self.helper_dict[location_text]
         
@@ -50,7 +49,6 @@ class ClassifyLocation:
             {"role": "user", "content": str(location_text)},
         ]
 
-        # יצירת התשובה
         outputs = self.pipe(
             messages,
             max_new_tokens=10,
@@ -58,14 +56,11 @@ class ClassifyLocation:
             pad_token_id=self.pipe.tokenizer.eos_token_id
         )
         
-        # חילוץ התוצאה מתוך מבנה הנתונים של Llama 3
         result = outputs[0]["generated_text"][-1]["content"].strip()
         self.helper_dict[location_text] = result
-        print(f"Location {location_text} classified as {result} and added to helper dictionary")
         return result
 
     def process_dataframe(self, column_name='location'):
-        # יצירת עותק כדי לא לשנות את המקור בצורה לא מבוקרת
         new_df = self.df.copy()
         new_df['classified_country'] = new_df[column_name].apply(self._classify_single_location)
         print(f"Counter in helper dictionary: {self.counter_in_helper_dict}")
