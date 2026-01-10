@@ -1,0 +1,25 @@
+target_column,#classes,#class_0,#class_1,#class_2,min_class_size,training_type,K,algorithm,Features_count,feature_set,TFIDF_features,balanced,accuracy,precision,recall,F1,AUC
+local:judge,2,80,80,0,80,K-Fold,5,LogReg,4,"name_language,bio_language,location_language",bio,True,0.819,0.87,0.75,0.805,0.907
+local:judge,2,80,80,0,80,LOOCV,,LogReg,4,"name_language,bio_language,location_language",bio,True,0.869,0.873,0.863,0.868,0.933
+local:judge,2,158,80,0,80,K-Fold,5,LogReg,4,"name_language,bio_language,location_language",bio,False,0.882,0.919,0.713,0.803,0.914
+local:judge,2,158,80,0,80,LOOCV,,LogReg,4,"name_language,bio_language,location_language",bio,False,0.891,0.922,0.738,0.819,0.899
+local:judge,2,80,80,0,80,K-Fold,5,Decision Tree,4,"name_language,bio_language,location_language",bio,True,0.856,0.89,0.812,0.85,0.896
+local:judge,2,80,80,0,80,LOOCV,,Decision Tree,4,"name_language,bio_language,location_language",bio,True,0.894,0.909,0.875,0.892,0.858
+local:judge,2,158,80,0,80,K-Fold,5,Decision Tree,4,"name_language,bio_language,location_language",bio,False,0.878,0.87,0.75,0.805,0.896
+local:judge,2,158,80,0,80,LOOCV,,Decision Tree,4,"name_language,bio_language,location_language",bio,False,0.895,0.923,0.75,0.828,0.895
+local:judge,2,80,80,0,80,K-Fold,5,Random Forest,4,"name_language,bio_language,location_language",bio,True,0.856,0.852,0.863,0.857,0.939
+local:judge,2,80,80,0,80,LOOCV,,Random Forest,4,"name_language,bio_language,location_language",bio,True,0.838,0.846,0.825,0.835,0.931
+local:judge,2,158,80,0,80,K-Fold,5,Random Forest,4,"name_language,bio_language,location_language",bio,False,0.861,0.831,0.738,0.781,0.933
+local:judge,2,158,80,0,80,LOOCV,,Random Forest,4,"name_language,bio_language,location_language",bio,False,0.87,0.845,0.75,0.795,0.925
+local:judge,2,80,80,0,80,K-Fold,5,SVM,4,"name_language,bio_language,location_language",bio,True,0.781,0.785,0.775,0.78,0.818
+local:judge,2,80,80,0,80,LOOCV,,SVM,4,"name_language,bio_language,location_language",bio,True,0.812,0.805,0.825,0.815,0.872
+local:judge,2,158,80,0,80,K-Fold,5,SVM,4,"name_language,bio_language,location_language",bio,False,0.807,0.681,0.8,0.736,0.864
+local:judge,2,158,80,0,80,LOOCV,,SVM,4,"name_language,bio_language,location_language",bio,False,0.803,0.69,0.75,0.719,0.865
+local:judge,2,80,80,0,80,K-Fold,5,XGBoost,4,"name_language,bio_language,location_language",bio,True,0.875,0.866,0.887,0.877,0.909
+local:judge,2,80,80,0,80,LOOCV,,XGBoost,4,"name_language,bio_language,location_language",bio,True,0.856,0.861,0.85,0.855,0.905
+local:judge,2,158,80,0,80,K-Fold,5,XGBoost,4,"name_language,bio_language,location_language",bio,False,0.874,0.917,0.688,0.786,0.904
+local:judge,2,158,80,0,80,LOOCV,,XGBoost,4,"name_language,bio_language,location_language",bio,False,0.87,0.902,0.688,0.78,0.895
+local:judge,2,80,80,0,80,K-Fold,5,AdaBoost,4,"name_language,bio_language,location_language",bio,True,0.812,0.812,0.812,0.812,0.901
+local:judge,2,80,80,0,80,LOOCV,,AdaBoost,4,"name_language,bio_language,location_language",bio,True,0.844,0.867,0.812,0.839,0.919
+local:judge,2,158,80,0,80,K-Fold,5,AdaBoost,4,"name_language,bio_language,location_language",bio,False,0.874,0.917,0.688,0.786,0.844
+local:judge,2,158,80,0,80,LOOCV,,AdaBoost,4,"name_language,bio_language,location_language",bio,False,0.874,0.917,0.688,0.786,0.686
