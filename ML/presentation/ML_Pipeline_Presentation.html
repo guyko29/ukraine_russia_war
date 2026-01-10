@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local User Classification - ML Pipeline</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-dark: #0f172a;
+            --bg-slide: #1e293b;
+            --accent: #3b82f6;
+            --accent-light: #60a5fa;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --code-bg: #0d1117;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+        
+        .presentation {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            padding: 60px 80px;
+            background: linear-gradient(135deg, var(--bg-slide) 0%, var(--bg-dark) 100%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .slide.active {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .slide-number {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--accent-light), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 30px;
+        }
+        
+        h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--accent-light);
+            margin: 25px 0 15px 0;
+        }
+        
+        .subtitle {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+        
+        p, li {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+        
+        ul {
+            list-style: none;
+            margin-left: 0;
+        }
+        
+        li {
+            position: relative;
+            padding-left: 25px;
+            margin-bottom: 12px;
+        }
+        
+        li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: bold;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 1rem;
+        }
+        
+        th, td {
+            padding: 14px 20px;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+        
+        th {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-light);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+        
+        td {
+            color: var(--text-secondary);
+        }
+        
+        tr:hover td {
+            background: rgba(59, 130, 246, 0.05);
+        }
+        
+        .highlight {
+            color: var(--success);
+            font-weight: 600;
+        }
+        
+        .code-block {
+            background: var(--code-bg);
+            border-radius: 12px;
+            padding: 25px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid #30363d;
+        }
+        
+        .code-block code {
+            color: #e6edf3;
+        }
+        
+        .pipeline-box {
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px solid var(--accent);
+            border-radius: 12px;
+            padding: 20px 30px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .pipeline-arrow {
+            text-align: center;
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin: 5px 0;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 20px;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        
+        .stat-value {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--accent-light);
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+        
+        .result-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .result-card h4 {
+            color: var(--success);
+            font-size: 1rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .result-card .value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .result-card .details {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 10px;
+        }
+        
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+        
+        .controls button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+        }
+        
+        .controls button:hover {
+            background: var(--accent-light);
+            transform: translateY(-2px);
+        }
+        
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .title-slide h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+        }
+        
+        .content {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+        }
+        
+        .formula {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--warning);
+            border-radius: 8px;
+            padding: 15px 25px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--warning);
+            display: inline-block;
+            margin: 10px 0;
+        }
+        
+        .insight-box {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 20px 25px;
+            margin: 20px 0;
+            border-radius: 0 12px 12px 0;
+        }
+        
+        .insight-box p {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+        
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: var(--accent);
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progress"></div>
+    
+    <div class="presentation" id="presentation">
+        
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide active">
+            <h1>Local User Classification</h1>
+            <p class="subtitle">ML Pipeline for Classifying Local vs Non-Local Users in Russia/Ukraine</p>
+            <div style="margin-top: 60px; color: var(--text-secondary);">
+                <p>University Final Project</p>
+                <p style="margin-top: 10px; font-size: 0.9rem;">Use ← → arrow keys or buttons to navigate</p>
+            </div>
+            <div class="slide-number">1 / 18</div>
+        </div>
+        
+        <!-- Slide 2: Project Overview -->
+        <div class="slide">
+            <h1>Project Overview</h1>
+            <div class="content">
+                <h3>Goal</h3>
+                <p>Classify whether a social media user is <strong style="color: var(--accent-light)">local</strong> (lives in Russia/Ukraine) based on their profile features.</p>
+                
+                <h3>Dataset Statistics</h3>
+                <div class="grid-3">
+                    <div class="stat-card">
+                        <div class="stat-value">253</div>
+                        <div class="stat-label">Total Samples</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">80</div>
+                        <div class="stat-label">Local (True) - 31.6%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">158</div>
+                        <div class="stat-label">Not Local (False) - 62.5%</div>
+                    </div>
+                </div>
+                
+                <h3>Classification Task</h3>
+                <p>Binary classification: <span class="highlight">True</span> (local) vs <span style="color: #ef4444;">False</span> (not local)</p>
+            </div>
+            <div class="slide-number">2 / 18</div>
+        </div>
+        
+        <!-- Slide 3: Input Features -->
+        <div class="slide">
+            <h1>Input Features</h1>
+            <div class="content">
+                <h3>Raw Data Columns</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Description</th>
+                            <th>Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>name</code></td>
+                            <td>User's display name</td>
+                            <td>"Oksana Tserkovna"</td>
+                        </tr>
+                        <tr>
+                            <td><code>bio</code></td>
+                            <td>User's bio (translated to English)</td>
+                            <td>"Free Creator, Author of..."</td>
+                        </tr>
+                        <tr>
+                            <td><code>name_language</code></td>
+                            <td>Detected language of name</td>
+                            <td>"russian", "english"</td>
+                        </tr>
+                        <tr>
+                            <td><code>bio_language</code></td>
+                            <td>Detected language of bio</td>
+                            <td>"russian", "ukrainian"</td>
+                        </tr>
+                        <tr>
+                            <td><code>location_language</code></td>
+                            <td>Detected language of location</td>
+                            <td>"russian", "german"</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h3>Features Used for Classification</h3>
+                <ul>
+                    <li><strong>Categorical:</strong> name_language, bio_language, location_language</li>
+                    <li><strong>Text (TF-IDF):</strong> bio content</li>
+                </ul>
+            </div>
+            <div class="slide-number">3 / 18</div>
+        </div>
+        
+        <!-- Slide 4: Data Preprocessing Pipeline -->
+        <div class="slide">
+            <h1>Data Preprocessing Pipeline</h1>
+            <div class="content" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div class="pipeline-box">📊 Raw Excel Data (253 samples)</div>
+                <div class="pipeline-arrow">↓</div>
+                <div class="pipeline-box">🧹 FeatureCleaner - Remove emojis, special characters</div>
+                <div class="pipeline-arrow">↓</div>
+                <div class="pipeline-box">🌐 Translator - Translate to English + detect original language</div>
+                <div class="pipeline-arrow">↓</div>
+                <div class="pipeline-box">📍 ClassifyLocation - Use LLM to classify country</div>
+                <div class="pipeline-arrow">↓</div>
+                <div class="pipeline-box" style="border-color: var(--success);">✅ Final Dataset (253 samples, clean)</div>
+            </div>
+            <div class="slide-number">4 / 18</div>
+        </div>
+        
+        <!-- Slide 5: Feature Engineering -->
+        <div class="slide">
+            <h1>Feature Engineering</h1>
+            <div class="content">
+                <div class="two-col">
+                    <div>
+                        <h3>1. One-Hot Encoding</h3>
+                        <p>Convert categorical features to binary:</p>
+                        <div class="code-block">
+                            <code>bio_language = "russian"<br>
+→ bio_language_russian = 1<br>
+→ bio_language_english = 0<br>
+→ bio_language_ukrainian = 0<br>
+...<br><br>
+<span style="color: var(--success);">Result: 3 columns → 85 binary features</span></code>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>2. TF-IDF Vectorization</h3>
+                        <p>Convert text to numerical features:</p>
+                        <div class="code-block">
+                            <code>bio = "I live in Moscow, developer"<br>
+→ TF-IDF scores:<br>
+&nbsp;&nbsp;moscow: 0.82<br>
+&nbsp;&nbsp;developer: 0.45<br>
+&nbsp;&nbsp;live: 0.31<br><br>
+<span style="color: var(--success);">Result: 100 features from bio text</span></code>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="insight-box">
+                    <p><strong>Total Features:</strong> 85 (categorical) + 100 (TF-IDF) = <strong>185 features</strong></p>
+                </div>
+            </div>
+            <div class="slide-number">5 / 18</div>
+        </div>
+        
+        <!-- Slide 6: TF-IDF Explained -->
+        <div class="slide">
+            <h1>TF-IDF Explained</h1>
+            <div class="content">
+                <h3>What is TF-IDF?</h3>
+                <p><strong>TF-IDF</strong> (Term Frequency - Inverse Document Frequency) measures word importance:</p>
+                
+                <div class="formula">TF-IDF = TF × IDF</div>
+                
+                <div class="two-col" style="margin-top: 30px;">
+                    <div>
+                        <h3>TF (Term Frequency)</h3>
+                        <p>How often a word appears in a document</p>
+                        <div class="code-block">
+                            <code>TF = count(word) / total_words</code>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>IDF (Inverse Document Frequency)</h3>
+                        <p>How rare a word is across all documents</p>
+                        <div class="code-block">
+                            <code>IDF = log(total_docs / docs_with_word)</code>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="insight-box">
+                    <p>Words that appear <strong>frequently in ONE document</strong> but <strong>rarely in others</strong> get high scores — they're distinctive!</p>
+                </div>
+            </div>
+            <div class="slide-number">6 / 18</div>
+        </div>
+        
+        <!-- Slide 7: ML Pipeline Architecture -->
+        <div class="slide">
+            <h1>ML Pipeline Architecture</h1>
+            <div class="content" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div style="display: flex; align-items: center; gap: 30px; margin-top: 40px;">
+                    <div class="pipeline-box" style="min-width: 200px;">
+                        <strong>Features</strong><br>
+                        <span style="font-size: 0.9rem; color: var(--text-secondary);">185 dimensions</span>
+                    </div>
+                    <div class="pipeline-arrow">→</div>
+                    <div class="pipeline-box" style="min-width: 200px;">
+                        <strong>StandardScaler</strong><br>
+                        <span style="font-size: 0.9rem; color: var(--text-secondary);">Normalize features</span>
+                    </div>
+                    <div class="pipeline-arrow">→</div>
+                    <div class="pipeline-box" style="min-width: 200px; border-color: var(--success);">
+                        <strong>Classifier</strong><br>
+                        <span style="font-size: 0.9rem; color: var(--text-secondary);">RF / SVM / XGBoost</span>
+                    </div>
+                    <div class="pipeline-arrow">→</div>
+                    <div class="pipeline-box" style="min-width: 150px; border-color: var(--warning);">
+                        <strong>Prediction</strong><br>
+                        <span style="font-size: 0.9rem; color: var(--text-secondary);">True / False</span>
+                    </div>
+                </div>
+                
+                <div class="code-block" style="margin-top: 50px; max-width: 600px;">
+                    <code>Pipeline([<br>
+&nbsp;&nbsp;('scaler', StandardScaler()),<br>
+&nbsp;&nbsp;('classifier', RandomForestClassifier())<br>
+])</code>
+                </div>
+            </div>
+            <div class="slide-number">7 / 18</div>
+        </div>
+        
+        <!-- Slide 8: Algorithms Tested -->
+        <div class="slide">
+            <h1>Algorithms Tested</h1>
+            <div class="content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Algorithm</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Logistic Regression</strong></td>
+                            <td>Linear</td>
+                            <td>Linear classifier with L1/L2 regularization</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Decision Tree</strong></td>
+                            <td>Tree</td>
+                            <td>Tree-based splits on feature thresholds</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Random Forest</strong></td>
+                            <td>Ensemble</td>
+                            <td>Ensemble of decision trees with bagging</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SVM</strong></td>
+                            <td>Kernel</td>
+                            <td>Support Vector Machine with RBF/linear kernels</td>
+                        </tr>
+                        <tr>
+                            <td><strong>XGBoost</strong></td>
+                            <td>Boosting</td>
+                            <td>Gradient boosting with regularization</td>
+                        </tr>
+                        <tr>
+                            <td><strong>AdaBoost</strong></td>
+                            <td>Boosting</td>
+                            <td>Adaptive boosting ensemble</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h3>Hyperparameter Tuning</h3>
+                <ul>
+                    <li><strong>GridSearchCV</strong> with 3-fold cross-validation</li>
+                    <li>Optimized for <strong>F1-weighted</strong> score</li>
+                </ul>
+            </div>
+            <div class="slide-number">8 / 18</div>
+        </div>
+        
+        <!-- Slide 9: Cross-Validation Methods -->
+        <div class="slide">
+            <h1>Cross-Validation Methods</h1>
+            <div class="content">
+                <div class="two-col">
+                    <div>
+                        <h3>K-Fold (K=5)</h3>
+                        <div class="code-block">
+                            <code>253 samples → 5 folds<br><br>
+Fold 1: Train 202, Test 51<br>
+Fold 2: Train 202, Test 51<br>
+Fold 3: Train 203, Test 50<br>
+Fold 4: Train 203, Test 50<br>
+Fold 5: Train 203, Test 51<br>
+─────────────────────────<br>
+Total: 253 predictions</code>
+                        </div>
+                        <p style="margin-top: 15px;">Each sample tested once, trained on 4 times</p>
+                    </div>
+                    <div>
+                        <h3>Leave-One-Out (LOOCV)</h3>
+                        <div class="code-block">
+                            <code>253 iterations:<br><br>
+Iter 1: Train 252, Test 1<br>
+Iter 2: Train 252, Test 1<br>
+Iter 3: Train 252, Test 1<br>
+...<br>
+Iter 253: Train 252, Test 1<br>
+─────────────────────────<br>
+Total: 253 predictions</code>
+                        </div>
+                        <p style="margin-top: 15px;">Most thorough (trains 253 models!)</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-number">9 / 18</div>
+        </div>
+        
+        <!-- Slide 10: Experiment Configurations -->
+        <div class="slide">
+            <h1>Experiment Configurations</h1>
+            <div class="content">
+                <h3>Parameter Grid</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Options</th>
+                            <th>Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Algorithms</td>
+                            <td>LogReg, Decision Tree, Random Forest, SVM, XGBoost, AdaBoost</td>
+                            <td>6</td>
+                        </tr>
+                        <tr>
+                            <td>CV Methods</td>
+                            <td>K-Fold, LOOCV</td>
+                            <td>2</td>
+                        </tr>
+                        <tr>
+                            <td>Balanced</td>
+                            <td>True (undersample), False (original)</td>
+                            <td>2</td>
+                        </tr>
+                        <tr>
+                            <td>Classes</td>
+                            <td>2 (True/False), 3 (True/False/Unknown)</td>
+                            <td>2</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="stat-card" style="margin-top: 40px; max-width: 400px;">
+                    <div class="stat-value">48</div>
+                    <div class="stat-label">Total Experiments (6 × 2 × 2 × 2)</div>
+                </div>
+            </div>
+            <div class="slide-number">10 / 18</div>
+        </div>
+        
+        <!-- Slide 11: Best Results -->
+        <div class="slide">
+            <h1>Best Results</h1>
+            <div class="content">
+                <div class="grid-3">
+                    <div class="result-card">
+                        <h4>🎯 Best Accuracy</h4>
+                        <div class="value">90.3%</div>
+                        <div class="details">
+                            Decision Tree<br>
+                            LOOCV | Imbalanced<br>
+                            Without TF-IDF
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <h4>📊 Best F1 Score</h4>
+                        <div class="value">0.893</div>
+                        <div class="details">
+                            XGBoost<br>
+                            K-Fold | Balanced<br>
+                            Without TF-IDF
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <h4>📈 Best AUC</h4>
+                        <div class="value">0.945</div>
+                        <div class="details">
+                            Random Forest<br>
+                            LOOCV | Balanced<br>
+                            Without TF-IDF
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="insight-box" style="margin-top: 40px;">
+                    <p>🔑 <strong>Key Finding:</strong> Language features alone achieve excellent results. TF-IDF provides marginal improvement in some configurations.</p>
+                </div>
+            </div>
+            <div class="slide-number">11 / 18</div>
+        </div>
+        
+        <!-- Slide 12: Why It Works - Language Signal -->
+        <div class="slide">
+            <h1>Why Does It Perform So Well?</h1>
+            <h2>Reason 1: Strong Signal in Language Features</h2>
+            <div class="content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Bio Language</th>
+                            <th>% Local (True)</th>
+                            <th>% Not Local (False)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong style="color: var(--accent-light);">Russian</strong></td>
+                            <td class="highlight">65.4%</td>
+                            <td>34.6%</td>
+                        </tr>
+                        <tr>
+                            <td><strong>English</strong></td>
+                            <td>18.6%</td>
+                            <td class="highlight">81.4%</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ukrainian</strong></td>
+                            <td>2.1%</td>
+                            <td class="highlight">97.9%</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="insight-box">
+                    <p>Just knowing <code>bio_language = russian</code> gives <strong>65% chance</strong> of correct "True" prediction!</p>
+                </div>
+                
+                <h3>Distribution in Dataset (253 samples)</h3>
+                <ul>
+                    <li>Russian bios: 83 samples (32.8%)</li>
+                    <li>English bios: 63 samples (24.9%)</li>
+                    <li>Ukrainian bios: 52 samples (20.6%)</li>
+                    <li>Other languages: 55 samples (21.7%)</li>
+                </ul>
+            </div>
+            <div class="slide-number">12 / 18</div>
+        </div>
+        
+        <!-- Slide 13: Why It Works - Feature Combination -->
+        <div class="slide">
+            <h1>Why Does It Perform So Well?</h1>
+            <h2>Reason 2: Feature Combination Effect</h2>
+            <div class="content">
+                <div class="code-block" style="font-size: 1.1rem; text-align: center; max-width: 800px; margin: 40px auto;">
+                    <code>bio_language = russian<br>
++ name_language = russian<br>
++ location_language = russian<br>
+────────────────────────────<br>
+= <span style="color: var(--success);">Very strong signal for "local = True"</span></code>
+                </div>
+                
+                <h3>Reason 3: TF-IDF Adds Content Signal</h3>
+                <p>Bio content provides additional clues beyond just language:</p>
+                <ul>
+                    <li><strong>Location names:</strong> Moscow, St. Petersburg, Kyiv</li>
+                    <li><strong>Cultural references:</strong> Specific to locals</li>
+                    <li><strong>Job descriptions:</strong> Common in Russia/Ukraine</li>
+                    <li><strong>Local expressions:</strong> Even in translation</li>
+                </ul>
+            </div>
+            <div class="slide-number">13 / 18</div>
+        </div>
+        
+        <!-- Slide 14: Why It Works - Easy Task -->
+        <div class="slide">
+            <h1>Why Does It Perform So Well?</h1>
+            <h2>Reason 4: The Task is Inherently "Easy"</h2>
+            <div class="content">
+                <div class="insight-box">
+                    <p>The classification question is essentially:<br><br>
+                    <em style="font-size: 1.3rem; color: var(--accent-light);">"Does this person write in Russian and have Russian-sounding content?"</em></p>
+                </div>
+                
+                <h3>Comparison with Harder Tasks</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Difficulty</th>
+                            <th>Why</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Our Task (Locality)</strong></td>
+                            <td style="color: var(--success);">Easy</td>
+                            <td>Language directly indicates origin</td>
+                        </tr>
+                        <tr>
+                            <td>Sentiment Analysis</td>
+                            <td style="color: var(--warning);">Medium</td>
+                            <td>Subjective interpretation needed</td>
+                        </tr>
+                        <tr>
+                            <td>Topic Classification</td>
+                            <td style="color: var(--warning);">Medium</td>
+                            <td>Requires understanding content</td>
+                        </tr>
+                        <tr>
+                            <td>Intent Detection</td>
+                            <td style="color: #ef4444;">Hard</td>
+                            <td>Ambiguous, context-dependent</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="slide-number">14 / 18</div>
+        </div>
+        
+        <!-- Slide 15: TF-IDF Impact -->
+        <div class="slide">
+            <h1>TF-IDF Impact Analysis</h1>
+            <div class="content">
+                <h3>With vs Without TF-IDF (Best Results)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Without TF-IDF</th>
+                            <th>With TF-IDF</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Best Accuracy</td>
+                            <td class="highlight">90.3%</td>
+                            <td>89.5%</td>
+                        </tr>
+                        <tr>
+                            <td>Best F1</td>
+                            <td class="highlight">0.893</td>
+                            <td>0.892</td>
+                        </tr>
+                        <tr>
+                            <td>Best AUC</td>
+                            <td class="highlight">0.945</td>
+                            <td>0.939</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h3>Key Observations</h3>
+                <div class="two-col" style="margin-top: 20px;">
+                    <div>
+                        <h4 style="color: var(--success);">Without TF-IDF</h4>
+                        <ul>
+                            <li>85 features (one-hot encoded)</li>
+                            <li>Simpler, faster model</li>
+                            <li><strong>Slightly better overall</strong></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 style="color: var(--accent-light);">With TF-IDF</h4>
+                        <ul>
+                            <li>185 features (85 + 100 TF-IDF)</li>
+                            <li>More complex model</li>
+                            <li>Similar performance</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="insight-box" style="margin-top: 20px;">
+                    <p>💡 Language features alone are highly predictive. TF-IDF adds complexity with marginal benefit.</p>
+                </div>
+            </div>
+            <div class="slide-number">15 / 18</div>
+        </div>
+        
+        <!-- Slide 16: Limitations -->
+        <div class="slide">
+            <h1>Limitations & Considerations</h1>
+            <div class="content">
+                <div class="grid-2">
+                    <div>
+                        <h3>⚠️ Small Dataset</h3>
+                        <ul>
+                            <li>253 samples may not capture all patterns</li>
+                            <li>Risk of overfitting</li>
+                            <li>Results might not generalize</li>
+                        </ul>
+                        
+                        <h3>⚠️ Class Imbalance</h3>
+                        <ul>
+                            <li>158 False (62.5%) vs 80 True (31.6%)</li>
+                            <li>Balanced mode undersamples to 160</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>⚠️ Feature Correlation</h3>
+                        <ul>
+                            <li>Language features directly correlate with locality</li>
+                            <li>Model learns "Russian = local"</li>
+                            <li>May not work for Russian speakers abroad</li>
+                        </ul>
+                        
+                        <h3>⚠️ Translation Effect</h3>
+                        <ul>
+                            <li>Bio text is already translated</li>
+                            <li>Original language patterns may be lost</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-number">16 / 18</div>
+        </div>
+        
+        <!-- Slide 17: Conclusions -->
+        <div class="slide">
+            <h1>Conclusions</h1>
+            <div class="content">
+                <h3>Key Findings</h3>
+                <ul>
+                    <li><strong>Best Model:</strong> Decision Tree with LOOCV achieves <span class="highlight">90.3% accuracy</span></li>
+                    <li><strong>Best AUC:</strong> Random Forest with LOOCV achieves <span class="highlight">0.945 AUC</span></li>
+                    <li><strong>Most Important Features:</strong> Language detection (bio_language, name_language, location_language)</li>
+                    <li><strong>TF-IDF Value:</strong> Marginal impact - language features alone are highly predictive</li>
+                    <li><strong>Why It Works:</strong> Strong correlation between writing language and locality (65.4% for Russian)</li>
+                </ul>
+                
+                <h3>Recommendations</h3>
+                <ul>
+                    <li>Use <strong>Decision Tree</strong> or <strong>XGBoost</strong> for best accuracy</li>
+                    <li>Use <strong>Random Forest</strong> for best AUC (0.945)</li>
+                    <li>Language features alone are sufficient - TF-IDF optional</li>
+                    <li>Use <strong>LOOCV</strong> for thorough evaluation on small datasets</li>
+                </ul>
+            </div>
+            <div class="slide-number">17 / 18</div>
+        </div>
+        
+        <!-- Slide 18: Thank You -->
+        <div class="slide title-slide">
+            <h1>Thank You!</h1>
+            <p class="subtitle">Questions?</p>
+            
+            <div style="margin-top: 60px; text-align: left; max-width: 500px;">
+                <h3>Code Structure</h3>
+                <div class="code-block" style="font-size: 0.9rem;">
+                    <code>ukraine_russia_war/<br>
+├── ML/<br>
+│   ├── main.py<br>
+│   ├── experiment_result.py<br>
+│   ├── classifiers/<br>
+│   │   └── local_classifier.py<br>
+│   └── best_model_results/<br>
+└── lib/Outputs/</code>
+                </div>
+            </div>
+            <div class="slide-number">18 / 18</div>
+        </div>
+        
+    </div>
+    
+    <div class="controls">
+        <button onclick="prevSlide()">← Previous</button>
+        <button onclick="nextSlide()">Next →</button>
+    </div>
+    
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const progressBar = document.getElementById('progress');
+        
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            progressBar.style.width = ((currentSlide + 1) / totalSlides * 100) + '%';
+        }
+        
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+        
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            }
+        });
+        
+        // Initialize progress bar
+        progressBar.style.width = (1 / totalSlides * 100) + '%';
+    </script>
+</body>
+</html>
+

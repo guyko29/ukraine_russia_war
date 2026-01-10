@@ -8,3 +8,8 @@ huggingface_hub
 accelerate
 dotenv
 pycountry
+
+# ML dependencies
+scikit-learn>=1.3.0
+xgboost>=2.0.0
+numpy>=1.24.0
