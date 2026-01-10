@@ -4,6 +4,7 @@ import pandas as pd
 from lib.translate import Translator
 from lib.classify_location import ClassifyLocation
 from helper_dict import helper_dictionary
+from lib.clean_features import FeatureCleaner
 
 
 COUNTRY_MAPPING = {
@@ -19,14 +20,19 @@ CRITERIA_MAPPING = {
 
 NEED_TRANSLATION = ["name", "bio", "location"]
 
+CLEAN_FEATURES = ["bio"]
+
 
 class GenerateFeatures:
-    def __init__(self, country: str, token: str):
+    def __init__(self, country: str, token: str, helper_dict: dict = {}):
         self.country = country
         project_dir = Path(__file__).resolve().parent
         excel_path = project_dir / COUNTRY_MAPPING[self.country]
         self.df = pd.read_excel(excel_path)
 
+        helper_dictionary.update(helper_dict)
+
+        self.feature_cleaner = FeatureCleaner(self.df, CLEAN_FEATURES)
         self.translator = Translator(self.df, NEED_TRANSLATION)
         self.location_classifier = ClassifyLocation(df=self.df, token=token, helper_dict=helper_dictionary)
 
@@ -38,7 +44,7 @@ class GenerateFeatures:
         and filled with NA values.
         """
         # copy to avoid mutating the global mapping lists
-        required_features = list(CRITERIA_MAPPING[criteria])
+        required_features = ['user_name'] + list(CRITERIA_MAPPING[criteria])
         list_translation_features = [f"{feature}_language" for feature in NEED_TRANSLATION if feature in required_features]
         
         if 'location' in required_features:
@@ -116,14 +122,18 @@ class GenerateFeatures:
 
 
     def generate_features(self):
+        print("Cleaning features...")
+        self.df = self.feature_cleaner.clean()
+
         print(f"Generating features for {self.country}...")
+        # Ensure translator uses the cleaned DataFrame
+        self.translator.df = self.df
         self.df = self.translator.translate_required_columns()
 
         print("Classifying locations...")
         # Ensure classification runs on the translated DataFrame so we keep translations
         self.location_classifier.df = self.df
         self.df, helper_dict = self.location_classifier.process_dataframe()
-        print(helper_dict)
 
         print("Filtering by label criteria...")
         df_filtered_local = self._filter_by_label_criteria("local")
@@ -135,3 +145,4 @@ class GenerateFeatures:
         self._create_xlsx_file(df_filtered_nationality, "nationality")
         self._create_xlsx_file(df_filtered_private, "private")
 
+        return helper_dict
