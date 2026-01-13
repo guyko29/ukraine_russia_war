@@ -345,7 +345,7 @@
                 <p>University Final Project</p>
                 <p style="margin-top: 10px; font-size: 0.9rem;">Use ← → arrow keys or buttons to navigate</p>
             </div>
-            <div class="slide-number">1 / 18</div>
+            <div class="slide-number">1 / 12</div>
         </div>
         
         <!-- Slide 2: Project Overview -->
@@ -374,7 +374,7 @@
                 <h3>Classification Task</h3>
                 <p>Binary classification: <span class="highlight">True</span> (local) vs <span style="color: #ef4444;">False</span> (not local)</p>
             </div>
-            <div class="slide-number">2 / 18</div>
+            <div class="slide-number">2 / 12</div>
         </div>
         
         <!-- Slide 3: Input Features -->
@@ -425,7 +425,7 @@
                     <li><strong>Text (TF-IDF):</strong> bio content</li>
                 </ul>
             </div>
-            <div class="slide-number">3 / 18</div>
+            <div class="slide-number">3 / 12</div>
         </div>
         
         <!-- Slide 4: Data Preprocessing Pipeline -->
@@ -442,7 +442,7 @@
                 <div class="pipeline-arrow">↓</div>
                 <div class="pipeline-box" style="border-color: var(--success);">✅ Final Dataset (253 samples, clean)</div>
             </div>
-            <div class="slide-number">4 / 18</div>
+            <div class="slide-number">4 / 12</div>
         </div>
         
         <!-- Slide 5: Feature Engineering -->
@@ -480,134 +480,10 @@
                     <p><strong>Total Features:</strong> 85 (categorical) + 100 (TF-IDF) = <strong>185 features</strong></p>
                 </div>
             </div>
-            <div class="slide-number">5 / 18</div>
+            <div class="slide-number">5 / 12</div>
         </div>
         
-        <!-- Slide 6: TF-IDF Explained -->
-        <div class="slide">
-            <h1>TF-IDF Explained</h1>
-            <div class="content">
-                <h3>What is TF-IDF?</h3>
-                <p><strong>TF-IDF</strong> (Term Frequency - Inverse Document Frequency) measures word importance:</p>
-                
-                <div class="formula">TF-IDF = TF × IDF</div>
-                
-                <div class="two-col" style="margin-top: 30px;">
-                    <div>
-                        <h3>TF (Term Frequency)</h3>
-                        <p>How often a word appears in a document</p>
-                        <div class="code-block">
-                            <code>TF = count(word) / total_words</code>
-                        </div>
-                    </div>
-                    <div>
-                        <h3>IDF (Inverse Document Frequency)</h3>
-                        <p>How rare a word is across all documents</p>
-                        <div class="code-block">
-                            <code>IDF = log(total_docs / docs_with_word)</code>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="insight-box">
-                    <p>Words that appear <strong>frequently in ONE document</strong> but <strong>rarely in others</strong> get high scores — they're distinctive!</p>
-                </div>
-            </div>
-            <div class="slide-number">6 / 18</div>
-        </div>
-        
-        <!-- Slide 7: ML Pipeline Architecture -->
-        <div class="slide">
-            <h1>ML Pipeline Architecture</h1>
-            <div class="content" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <div style="display: flex; align-items: center; gap: 30px; margin-top: 40px;">
-                    <div class="pipeline-box" style="min-width: 200px;">
-                        <strong>Features</strong><br>
-                        <span style="font-size: 0.9rem; color: var(--text-secondary);">185 dimensions</span>
-                    </div>
-                    <div class="pipeline-arrow">→</div>
-                    <div class="pipeline-box" style="min-width: 200px;">
-                        <strong>StandardScaler</strong><br>
-                        <span style="font-size: 0.9rem; color: var(--text-secondary);">Normalize features</span>
-                    </div>
-                    <div class="pipeline-arrow">→</div>
-                    <div class="pipeline-box" style="min-width: 200px; border-color: var(--success);">
-                        <strong>Classifier</strong><br>
-                        <span style="font-size: 0.9rem; color: var(--text-secondary);">RF / SVM / XGBoost</span>
-                    </div>
-                    <div class="pipeline-arrow">→</div>
-                    <div class="pipeline-box" style="min-width: 150px; border-color: var(--warning);">
-                        <strong>Prediction</strong><br>
-                        <span style="font-size: 0.9rem; color: var(--text-secondary);">True / False</span>
-                    </div>
-                </div>
-                
-                <div class="code-block" style="margin-top: 50px; max-width: 600px;">
-                    <code>Pipeline([<br>
-&nbsp;&nbsp;('scaler', StandardScaler()),<br>
-&nbsp;&nbsp;('classifier', RandomForestClassifier())<br>
-])</code>
-                </div>
-            </div>
-            <div class="slide-number">7 / 18</div>
-        </div>
-        
-        <!-- Slide 8: Algorithms Tested -->
-        <div class="slide">
-            <h1>Algorithms Tested</h1>
-            <div class="content">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Algorithm</th>
-                            <th>Type</th>
-                            <th>Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Logistic Regression</strong></td>
-                            <td>Linear</td>
-                            <td>Linear classifier with L1/L2 regularization</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Decision Tree</strong></td>
-                            <td>Tree</td>
-                            <td>Tree-based splits on feature thresholds</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Random Forest</strong></td>
-                            <td>Ensemble</td>
-                            <td>Ensemble of decision trees with bagging</td>
-                        </tr>
-                        <tr>
-                            <td><strong>SVM</strong></td>
-                            <td>Kernel</td>
-                            <td>Support Vector Machine with RBF/linear kernels</td>
-                        </tr>
-                        <tr>
-                            <td><strong>XGBoost</strong></td>
-                            <td>Boosting</td>
-                            <td>Gradient boosting with regularization</td>
-                        </tr>
-                        <tr>
-                            <td><strong>AdaBoost</strong></td>
-                            <td>Boosting</td>
-                            <td>Adaptive boosting ensemble</td>
-                        </tr>
-                    </tbody>
-                </table>
-                
-                <h3>Hyperparameter Tuning</h3>
-                <ul>
-                    <li><strong>GridSearchCV</strong> with 3-fold cross-validation</li>
-                    <li>Optimized for <strong>F1-weighted</strong> score</li>
-                </ul>
-            </div>
-            <div class="slide-number">8 / 18</div>
-        </div>
-        
-        <!-- Slide 9: Cross-Validation Methods -->
+        <!-- Slide 6: Cross-Validation Methods -->
         <div class="slide">
             <h1>Cross-Validation Methods</h1>
             <div class="content">
@@ -642,10 +518,10 @@ Total: 253 predictions</code>
                     </div>
                 </div>
             </div>
-            <div class="slide-number">9 / 18</div>
+            <div class="slide-number">6 / 12</div>
         </div>
         
-        <!-- Slide 10: Experiment Configurations -->
+        <!-- Slide 7: Experiment Configurations -->
         <div class="slide">
             <h1>Experiment Configurations</h1>
             <div class="content">
@@ -687,10 +563,10 @@ Total: 253 predictions</code>
                     <div class="stat-label">Total Experiments (6 × 2 × 2 × 2)</div>
                 </div>
             </div>
-            <div class="slide-number">10 / 18</div>
+            <div class="slide-number">7 / 12</div>
         </div>
         
-        <!-- Slide 11: Best Results -->
+        <!-- Slide 8: Best Results -->
         <div class="slide">
             <h1>Best Results</h1>
             <div class="content">
@@ -728,10 +604,10 @@ Total: 253 predictions</code>
                     <p>🔑 <strong>Key Finding:</strong> Language features alone achieve excellent results. TF-IDF provides marginal improvement in some configurations.</p>
                 </div>
             </div>
-            <div class="slide-number">11 / 18</div>
+            <div class="slide-number">8 / 12</div>
         </div>
         
-        <!-- Slide 12: Why It Works - Language Signal -->
+        <!-- Slide 9: Why It Works - Language Signal -->
         <div class="slide">
             <h1>Why Does It Perform So Well?</h1>
             <h2>Reason 1: Strong Signal in Language Features</h2>
@@ -775,10 +651,10 @@ Total: 253 predictions</code>
                     <li>Other languages: 55 samples (21.7%)</li>
                 </ul>
             </div>
-            <div class="slide-number">12 / 18</div>
+            <div class="slide-number">9 / 12</div>
         </div>
         
-        <!-- Slide 13: Why It Works - Feature Combination -->
+        <!-- Slide 10: Why It Works - Feature Combination -->
         <div class="slide">
             <h1>Why Does It Perform So Well?</h1>
             <h2>Reason 2: Feature Combination Effect</h2>
@@ -800,56 +676,10 @@ Total: 253 predictions</code>
                     <li><strong>Local expressions:</strong> Even in translation</li>
                 </ul>
             </div>
-            <div class="slide-number">13 / 18</div>
+            <div class="slide-number">10 / 12</div>
         </div>
         
-        <!-- Slide 14: Why It Works - Easy Task -->
-        <div class="slide">
-            <h1>Why Does It Perform So Well?</h1>
-            <h2>Reason 4: The Task is Inherently "Easy"</h2>
-            <div class="content">
-                <div class="insight-box">
-                    <p>The classification question is essentially:<br><br>
-                    <em style="font-size: 1.3rem; color: var(--accent-light);">"Does this person write in Russian and have Russian-sounding content?"</em></p>
-                </div>
-                
-                <h3>Comparison with Harder Tasks</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Task</th>
-                            <th>Difficulty</th>
-                            <th>Why</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Our Task (Locality)</strong></td>
-                            <td style="color: var(--success);">Easy</td>
-                            <td>Language directly indicates origin</td>
-                        </tr>
-                        <tr>
-                            <td>Sentiment Analysis</td>
-                            <td style="color: var(--warning);">Medium</td>
-                            <td>Subjective interpretation needed</td>
-                        </tr>
-                        <tr>
-                            <td>Topic Classification</td>
-                            <td style="color: var(--warning);">Medium</td>
-                            <td>Requires understanding content</td>
-                        </tr>
-                        <tr>
-                            <td>Intent Detection</td>
-                            <td style="color: #ef4444;">Hard</td>
-                            <td>Ambiguous, context-dependent</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="slide-number">14 / 18</div>
-        </div>
-        
-        <!-- Slide 15: TF-IDF Impact -->
+        <!-- Slide 11: TF-IDF Impact -->
         <div class="slide">
             <h1>TF-IDF Impact Analysis</h1>
             <div class="content">
@@ -905,48 +735,10 @@ Total: 253 predictions</code>
                     <p>💡 Language features alone are highly predictive. TF-IDF adds complexity with marginal benefit.</p>
                 </div>
             </div>
-            <div class="slide-number">15 / 18</div>
+            <div class="slide-number">11 / 12</div>
         </div>
         
-        <!-- Slide 16: Limitations -->
-        <div class="slide">
-            <h1>Limitations & Considerations</h1>
-            <div class="content">
-                <div class="grid-2">
-                    <div>
-                        <h3>⚠️ Small Dataset</h3>
-                        <ul>
-                            <li>253 samples may not capture all patterns</li>
-                            <li>Risk of overfitting</li>
-                            <li>Results might not generalize</li>
-                        </ul>
-                        
-                        <h3>⚠️ Class Imbalance</h3>
-                        <ul>
-                            <li>158 False (62.5%) vs 80 True (31.6%)</li>
-                            <li>Balanced mode undersamples to 160</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h3>⚠️ Feature Correlation</h3>
-                        <ul>
-                            <li>Language features directly correlate with locality</li>
-                            <li>Model learns "Russian = local"</li>
-                            <li>May not work for Russian speakers abroad</li>
-                        </ul>
-                        
-                        <h3>⚠️ Translation Effect</h3>
-                        <ul>
-                            <li>Bio text is already translated</li>
-                            <li>Original language patterns may be lost</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="slide-number">16 / 18</div>
-        </div>
-        
-        <!-- Slide 17: Conclusions -->
+        <!-- Slide 12: Conclusions -->
         <div class="slide">
             <h1>Conclusions</h1>
             <div class="content">
@@ -967,28 +759,7 @@ Total: 253 predictions</code>
                     <li>Use <strong>LOOCV</strong> for thorough evaluation on small datasets</li>
                 </ul>
             </div>
-            <div class="slide-number">17 / 18</div>
-        </div>
-        
-        <!-- Slide 18: Thank You -->
-        <div class="slide title-slide">
-            <h1>Thank You!</h1>
-            <p class="subtitle">Questions?</p>
-            
-            <div style="margin-top: 60px; text-align: left; max-width: 500px;">
-                <h3>Code Structure</h3>
-                <div class="code-block" style="font-size: 0.9rem;">
-                    <code>ukraine_russia_war/<br>
-├── ML/<br>
-│   ├── main.py<br>
-│   ├── experiment_result.py<br>
-│   ├── classifiers/<br>
-│   │   └── local_classifier.py<br>
-│   └── best_model_results/<br>
-└── lib/Outputs/</code>
-                </div>
-            </div>
-            <div class="slide-number">18 / 18</div>
+            <div class="slide-number">12 / 12</div>
         </div>
         
     </div>
