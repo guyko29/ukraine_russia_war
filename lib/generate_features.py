@@ -14,7 +14,7 @@ COUNTRY_MAPPING = {
 
 CRITERIA_MAPPING = {
     "local": ["name", "bio", "location"],
-    "nationality": ["location", "bio"],
+    "nationality": ["name", "location", "bio"],
     "private": ["name", "bio", "following", "followers"]
 } 
 
@@ -102,7 +102,7 @@ class GenerateFeatures:
 
         judge_prefix = criteria
         if criteria == "nationality":
-            judge_prefix = "ukraine" if self.country == "Ukraine" else "russia"
+            judge_prefix = "ukraine" if self.country == "Ukraine" else "russian"
         
         judge_suffixes = ["1st judge", "2nd judge", "3rd judge"]
         judge_columns = [f"{judge_prefix}:{suffix}" for suffix in judge_suffixes]
