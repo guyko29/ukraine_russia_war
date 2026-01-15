@@ -1,0 +1,25 @@
+target_column,#classes,#class_0,#class_1,#class_2,min_class_size,training_type,K,algorithm,Features_count,feature_set,TFIDF_features,balanced,accuracy,precision,recall,F1,AUC
+russian:judge,2,68,68,0,68,K-Fold,5,LogReg,5,"classified_country,name_language,bio_language,location_language",bio,True,0.941,0.955,0.926,0.94,0.979
+russian:judge,2,68,68,0,68,K-Fold,5,Decision Tree,5,"classified_country,name_language,bio_language,location_language",bio,True,0.956,0.943,0.971,0.957,0.968
+russian:judge,2,68,68,0,68,K-Fold,5,Random Forest,5,"classified_country,name_language,bio_language,location_language",bio,True,0.949,0.969,0.926,0.947,0.985
+russian:judge,2,68,68,0,68,K-Fold,5,SVM,5,"classified_country,name_language,bio_language,location_language",bio,True,0.89,0.884,0.897,0.891,0.964
+russian:judge,2,68,68,0,68,K-Fold,5,XGBoost,5,"classified_country,name_language,bio_language,location_language",bio,True,0.956,0.931,0.985,0.957,0.976
+russian:judge,2,68,68,0,68,K-Fold,5,AdaBoost,5,"classified_country,name_language,bio_language,location_language",bio,True,0.934,0.968,0.897,0.931,0.971
+russian:judge,2,68,68,0,68,LOOCV,,LogReg,5,"classified_country,name_language,bio_language,location_language",bio,True,0.941,0.941,0.941,0.941,0.974
+russian:judge,2,68,68,0,68,LOOCV,,Decision Tree,5,"classified_country,name_language,bio_language,location_language",bio,True,0.904,0.91,0.897,0.904,0.961
+russian:judge,2,68,68,0,68,LOOCV,,Random Forest,5,"classified_country,name_language,bio_language,location_language",bio,True,0.919,0.938,0.897,0.917,0.982
+russian:judge,2,68,68,0,68,LOOCV,,SVM,5,"classified_country,name_language,bio_language,location_language",bio,True,0.919,0.925,0.912,0.919,0.954
+russian:judge,2,68,68,0,68,LOOCV,,XGBoost,5,"classified_country,name_language,bio_language,location_language",bio,True,0.926,0.914,0.941,0.928,0.978
+russian:judge,2,68,68,0,68,LOOCV,,AdaBoost,5,"classified_country,name_language,bio_language,location_language",bio,True,0.956,0.943,0.971,0.957,0.978
+russian:judge,2,74,68,0,68,K-Fold,5,LogReg,5,"classified_country,name_language,bio_language,location_language",bio,False,0.944,0.955,0.926,0.94,0.981
+russian:judge,2,74,68,0,68,K-Fold,5,Decision Tree,5,"classified_country,name_language,bio_language,location_language",bio,False,0.944,0.969,0.912,0.939,0.954
+russian:judge,2,74,68,0,68,K-Fold,5,Random Forest,5,"classified_country,name_language,bio_language,location_language",bio,False,0.944,0.955,0.926,0.94,0.983
+russian:judge,2,74,68,0,68,K-Fold,5,SVM,5,"classified_country,name_language,bio_language,location_language",bio,False,0.908,0.887,0.926,0.906,0.971
+russian:judge,2,74,68,0,68,K-Fold,5,XGBoost,5,"classified_country,name_language,bio_language,location_language",bio,False,0.915,0.924,0.897,0.91,0.976
+russian:judge,2,74,68,0,68,K-Fold,5,AdaBoost,5,"classified_country,name_language,bio_language,location_language",bio,False,0.965,0.97,0.956,0.963,0.983
+russian:judge,2,74,68,0,68,LOOCV,,LogReg,5,"classified_country,name_language,bio_language,location_language",bio,False,0.944,0.955,0.926,0.94,0.979
+russian:judge,2,74,68,0,68,LOOCV,,Decision Tree,5,"classified_country,name_language,bio_language,location_language",bio,False,0.937,0.954,0.912,0.932,0.967
+russian:judge,2,74,68,0,68,LOOCV,,Random Forest,5,"classified_country,name_language,bio_language,location_language",bio,False,0.93,0.939,0.912,0.925,0.98
+russian:judge,2,74,68,0,68,LOOCV,,SVM,5,"classified_country,name_language,bio_language,location_language",bio,False,0.923,0.913,0.926,0.92,0.962
+russian:judge,2,74,68,0,68,LOOCV,,XGBoost,5,"classified_country,name_language,bio_language,location_language",bio,False,0.93,0.914,0.941,0.928,0.974
+russian:judge,2,74,68,0,68,LOOCV,,AdaBoost,5,"classified_country,name_language,bio_language,location_language",bio,False,0.958,0.943,0.971,0.957,0.982

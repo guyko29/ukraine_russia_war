@@ -1,6 +1,6 @@
 """
-Local Classifier Module
-Classifies whether a user is local (lives in Russia or Ukraine) based on their profile features.
+Private Classifier Module
+Classifies whether a user is a private individual or an organization based on their profile features.
 """
 
 import pandas as pd
@@ -29,29 +29,32 @@ from sklearn.metrics import (
     roc_auc_score
 )
 from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 # XGBoost
 from xgboost import XGBClassifier
 
 # Local imports
-from .experiment_result import ExperimentResult
+from ..experiment_result import ExperimentResult
 
 warnings.filterwarnings('ignore')
 
 
-class LocalClassifier:
+class PrivateClassifier:
     """
-    Classifier for determining if a user is local (lives in Russia or Ukraine).
+    Classifier for determining if a user is a private individual or an organization.
+    
+    Uses features like name, bio, follower/following counts, and language detection.
     
     Supports multiple classification algorithms with hyperparameter tuning,
     K-Fold and Leave-One-Out cross validation, and balanced/imbalanced modes.
     """
     
-    # Columns to exclude from features (raw text that would cause data leakage)
-    EXCLUDE_COLUMNS = ['name', 'bio']
+    # Default columns to use as numeric features (no language features)
+    DEFAULT_FEATURE_COLUMNS = ['following', 'followers']
     
-    # Columns to use as categorical features
-    FEATURE_COLUMNS = ['classified_country', 'name_language', 'bio_language', 'location_language']
+    # Label column
+    LABEL_COLUMN = 'private:judge'
     
     ALGORITHMS = {
         'LogReg': LogisticRegression,
@@ -101,37 +104,53 @@ class LocalClassifier:
     def __init__(
         self, 
         country: Literal['Russia', 'Ukraine'],
-        label_column: str = 'local:judge',
+        feature_columns: Optional[List[str]] = None,
+        tfidf_columns: Optional[List[str]] = None,
+        label_column: Optional[str] = None,
         random_state: int = 42
     ):
         """
-        Initialize the LocalClassifier.
+        Initialize the PrivateClassifier.
         
         Args:
             country: The country to classify for ('Russia' or 'Ukraine')
-            label_column: The column name containing the labels
+            feature_columns: List of feature columns to use (default: name_language, bio_language, following, followers)
+            tfidf_columns: List of text columns to use with TF-IDF vectorization (e.g., ['bio', 'name'])
+            label_column: The column name containing the labels (default: 'private:judge')
             random_state: Random state for reproducibility
         """
         self.country = country
-        self.label_column = label_column
+        self.feature_columns = feature_columns if feature_columns else self.DEFAULT_FEATURE_COLUMNS.copy()
+        self.tfidf_columns = tfidf_columns if tfidf_columns else []
+        self.label_column = label_column if label_column else self.LABEL_COLUMN
         self.random_state = random_state
         self.results: List[ExperimentResult] = []
         self.iteration_counter = 0
         
+        print(f"Private Classifier for {country}")
+        print(f"Using features: {self.feature_columns}")
+        print(f"Label column: {self.label_column}")
+        if self.tfidf_columns:
+            print(f"Using TF-IDF features: {self.tfidf_columns}")
+        
         # Load the data
         self._load_data()
         
+    # Classifier type name (used in output filename)
+    CLASSIFIER_TYPE = 'private'
+    
     def _load_data(self) -> None:
         """Load the data from the Excel file."""
-        project_dir = Path(__file__).resolve().parent.parent
-        data_path = project_dir / "lib" / "Outputs" / self.country / f"{self.country}_local.xlsx"
+        # Navigate from ML/classifiers/ to project root
+        project_dir = Path(__file__).resolve().parent.parent.parent
+        data_path = project_dir / "lib" / "Outputs" / self.country / f"{self.country}_private.xlsx"
         
         if not data_path.exists():
             raise FileNotFoundError(f"Data file not found: {data_path}")
         
         self.df = pd.read_excel(data_path)
         print(f"Loaded {len(self.df)} samples from {data_path}")
-    
+        
     def _normalize_label(self, value) -> str:
         """
         Normalize label values to consistent strings.
@@ -140,7 +159,7 @@ class LocalClassifier:
             value: The label value (can be bool, string, int, etc.)
             
         Returns:
-            Normalized string: 'true', 'false', or 'unknown'
+            Normalized string: 'true' (private), 'false' (organization), or 'unknown'
         """
         if pd.isna(value):
             return 'unknown'
@@ -155,22 +174,26 @@ class LocalClassifier:
         
         # Handle numeric values (1/0)
         if isinstance(value, (int, float, np.integer, np.floating)):
+            if pd.isna(value):
+                return 'unknown'
             if value == 1:
-                return 'true'
+                return 'true'  # Private individual
             elif value == 0:
-                return 'false'
+                return 'false'  # Organization
             return 'unknown'
         
         # Handle string values
         if isinstance(value, str):
             value_lower = value.strip().lower()
-            if value_lower in ('true', 't', 'yes', 'y', '1'):
+            if value_lower in ('true', 't', 'yes', 'y', '1', 'private', 'individual'):
                 return 'true'
-            elif value_lower in ('false', 'f', 'no', 'n', '0'):
+            elif value_lower in ('false', 'f', 'no', 'n', '0', 'organization', 'org', 'company'):
                 return 'false'
+            elif value_lower in ('neutral', 'unknown', 'na', 'n/a', ''):
+                return 'unknown'
         
         return 'unknown'
-        
+    
     def _prepare_features(
         self, 
         df: pd.DataFrame,
@@ -181,7 +204,7 @@ class LocalClassifier:
         
         Args:
             df: DataFrame with the data
-            num_classes: 2 for binary (true/false), 3 for multi-class (true/false/unknown)
+            num_classes: 2 for binary (private/org), 3 for multi-class (private/org/unknown)
             
         Returns:
             X: Feature matrix
@@ -206,13 +229,48 @@ class LocalClassifier:
         # Separate features and labels
         y = df_work[self.label_column]
         
-        # Only use specified feature columns (exclude raw text like name, bio)
-        available_features = [col for col in self.FEATURE_COLUMNS if col in df_work.columns]
-        num_original_features = len(available_features)
-        X = df_work[available_features].copy()
+        # Count original features (categorical + numeric + tfidf columns)
+        available_features = [col for col in self.feature_columns if col in df_work.columns]
+        available_tfidf = [col for col in self.tfidf_columns if col in df_work.columns]
+        num_original_features = len(available_features) + len(available_tfidf)
         
-        # Encode categorical features
-        X = self._encode_features(X)
+        # Separate numeric and categorical features
+        numeric_cols = ['following', 'followers']
+        categorical_cols = [col for col in available_features if col not in numeric_cols]
+        numeric_features = [col for col in available_features if col in numeric_cols]
+        
+        # Process categorical features
+        X_categorical = None
+        if categorical_cols:
+            X_cat = df_work[categorical_cols].copy()
+            X_categorical = self._encode_categorical_features(X_cat)
+        
+        # Process numeric features
+        X_numeric = None
+        if numeric_features:
+            X_numeric = df_work[numeric_features].copy()
+            X_numeric = X_numeric.fillna(0)
+        
+        # Process TF-IDF features
+        X_tfidf = None
+        if available_tfidf:
+            X_tfidf = self._encode_tfidf_features(df_work, available_tfidf)
+        
+        # Combine features
+        frames = []
+        if X_categorical is not None:
+            frames.append(X_categorical)
+        if X_numeric is not None:
+            X_numeric.index = df_work.index
+            frames.append(X_numeric)
+        if X_tfidf is not None:
+            X_tfidf.index = df_work.index
+            frames.append(X_tfidf)
+        
+        if not frames:
+            raise ValueError("No features to use. Specify feature_columns or tfidf_columns.")
+        
+        X = pd.concat(frames, axis=1)
         
         # Encode labels
         label_encoder = LabelEncoder()
@@ -220,7 +278,55 @@ class LocalClassifier:
         
         return X, pd.Series(y_encoded, index=X.index), label_encoder, num_original_features
     
-    def _encode_features(self, X: pd.DataFrame) -> pd.DataFrame:
+    def _encode_tfidf_features(
+        self, 
+        df: pd.DataFrame, 
+        tfidf_cols: List[str]
+    ) -> pd.DataFrame:
+        """
+        Encode text columns using TF-IDF vectorization.
+        
+        Args:
+            df: DataFrame with the data
+            tfidf_cols: List of text columns to vectorize
+            
+        Returns:
+            DataFrame with TF-IDF features
+        """
+        tfidf_frames = []
+        
+        for col in tfidf_cols:
+            # Fill NaN with empty string
+            text_data = df[col].fillna('').astype(str)
+            
+            # Create TF-IDF vectorizer
+            vectorizer = TfidfVectorizer(
+                max_features=100,  # Limit features to prevent overfitting
+                min_df=2,  # Ignore terms that appear in less than 2 documents
+                max_df=0.95,  # Ignore terms that appear in more than 95% of documents
+                ngram_range=(1, 2),  # Use unigrams and bigrams
+                stop_words=None  # Keep all words (text might be in different languages)
+            )
+            
+            # Fit and transform
+            tfidf_matrix = vectorizer.fit_transform(text_data)
+            
+            # Convert to DataFrame
+            feature_names = [f"{col}_tfidf_{name}" for name in vectorizer.get_feature_names_out()]
+            tfidf_df = pd.DataFrame(
+                tfidf_matrix.toarray(),
+                columns=feature_names,
+                index=df.index
+            )
+            
+            tfidf_frames.append(tfidf_df)
+        
+        # Combine all TF-IDF features
+        if tfidf_frames:
+            return pd.concat(tfidf_frames, axis=1)
+        return pd.DataFrame(index=df.index)
+    
+    def _encode_categorical_features(self, X: pd.DataFrame) -> pd.DataFrame:
         """
         Encode categorical features using one-hot encoding.
         
@@ -543,9 +649,15 @@ class LocalClassifier:
         class_2_count = class_counts.get(2, 0) if num_classes == 3 else 0
         min_class_size = class_counts.min()
         
+        # Build feature set description
+        feature_set = ','.join(self.feature_columns)
+        tfidf_features = ','.join(self.tfidf_columns) if self.tfidf_columns else ''
+        
         print(f"Dataset size: {len(X)}")
         print(f"Class distribution: {dict(class_counts)}")
-        print(f"Number of original features: {num_original_features}")
+        print(f"Number of features: {num_original_features} (total encoded: {X.shape[1]})")
+        if tfidf_features:
+            print(f"TF-IDF features: {tfidf_features}")
         
         # Hyperparameter tuning
         print("Performing hyperparameter tuning...")
@@ -576,6 +688,8 @@ class LocalClassifier:
             k=k if training_type == 'K-Fold' else None,
             algorithm=algorithm,
             features_count=num_original_features,
+            feature_set=feature_set,
+            tfidf_features=tfidf_features,
             balanced=balanced,
             accuracy=metrics['accuracy'],
             precision=metrics['precision'],
@@ -602,7 +716,7 @@ class LocalClassifier:
             algorithms: List of algorithms to test (default: all)
             training_types: List of training types (default: ['K-Fold', 'LOOCV'])
             balanced_modes: List of balanced modes (default: [True, False])
-            num_classes_list: List of num_classes values (default: [2, 3])
+            num_classes_list: List of num_classes values (default: [2])
             k: Number of folds for K-Fold CV
             
         Returns:
@@ -615,7 +729,7 @@ class LocalClassifier:
         if balanced_modes is None:
             balanced_modes = [True, False]
         if num_classes_list is None:
-            num_classes_list = [2, 3]
+            num_classes_list = [2]  # Binary by default for private classification
         
         total_experiments = (
             len(algorithms) * 
@@ -624,7 +738,7 @@ class LocalClassifier:
             len(num_classes_list)
         )
         print(f"\n{'#'*60}")
-        print(f"Starting {total_experiments} experiments for {self.country}")
+        print(f"Starting {total_experiments} PRIVATE experiments for {self.country}")
         print(f"{'#'*60}")
         
         for num_classes in num_classes_list:
@@ -654,8 +768,8 @@ class LocalClassifier:
         Save experiment results to a CSV file.
         
         Args:
-            output_path: Directory to save the file (default: best_model_results/)
-            filename: Name of the output file (default: {country}_experiments_results.csv)
+            output_path: Directory to save the file (default: ML/best_model_results/)
+            filename: Name of the output file (default: {country}_{classifier_type}_experiments_results.csv)
             
         Returns:
             Path to the saved file
@@ -664,13 +778,14 @@ class LocalClassifier:
             raise ValueError("No results to save. Run experiments first.")
         
         if output_path is None:
-            project_dir = Path(__file__).resolve().parent.parent
-            output_path = project_dir / "best_model_results"
+            # Navigate from ML/classifiers/ to ML/best_model_results/
+            ml_dir = Path(__file__).resolve().parent.parent
+            output_path = ml_dir / "best_model_results"
         else:
             output_path = Path(output_path)
         
         if filename is None:
-            filename = f"{self.country}_experiments_results.csv"
+            filename = f"{self.country}_{self.CLASSIFIER_TYPE}_experiments_results.csv"
         
         output_path.mkdir(parents=True, exist_ok=True)
         filepath = output_path / filename
@@ -704,16 +819,30 @@ class LocalClassifier:
 
 
 def main():
-    """Main function to run the classifier experiments."""
+    """Main function to run the private classifier experiments."""
     import argparse
     
-    parser = argparse.ArgumentParser(description='Run Local Classifier experiments')
+    parser = argparse.ArgumentParser(description='Run Private Classifier experiments')
     parser.add_argument(
         '--country', 
         type=str, 
         choices=['Russia', 'Ukraine'], 
         required=True,
         help='Country to classify for'
+    )
+    parser.add_argument(
+        '--features',
+        type=str,
+        nargs='+',
+        default=None,
+        help='Feature columns to use (default: name_language, bio_language, following, followers)'
+    )
+    parser.add_argument(
+        '--tfidf',
+        type=str,
+        nargs='+',
+        default=None,
+        help='Text columns to use with TF-IDF (e.g., bio, name)'
     )
     parser.add_argument(
         '--algorithms',
@@ -738,8 +867,12 @@ def main():
     
     args = parser.parse_args()
     
-    # Initialize classifier
-    classifier = LocalClassifier(country=args.country)
+    # Initialize classifier with feature columns
+    classifier = PrivateClassifier(
+        country=args.country,
+        feature_columns=args.features,
+        tfidf_columns=args.tfidf
+    )
     
     # Run all experiments
     classifier.run_all_experiments(
@@ -760,3 +893,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
