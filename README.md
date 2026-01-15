@@ -1,15 +1,42 @@
-# Russia–Ukraine War — analysis scripts and outputs
+# Russia–Ukraine War — User Classification Pipeline
 
-This repository contains scripts and data used for analyzing aspects of the Russia–Ukraine war.
+This repository contains ML pipelines for classifying social media users related to the Russia-Ukraine war.
 
-Note: the classification scripts are in `lib/` and their output files are stored under `lib/Outputs/` (for example `lib/Outputs/Russia` and `lib/Outputs/Ukraine`).
+## ML Classifiers
 
-Repository structure (partial):
+Three binary classifiers that analyze user profiles:
 
-- `lib/` — analysis scripts (e.g. `classify_location.py`, `generate_features.py`, `translate.py`)
-- `lib/Outputs/` — classification outputs and other generated files
-- `Russia/`, `Ukraine/` — country-specific data
+| Classifier | Purpose | Features | Best Accuracy |
+|------------|---------|----------|---------------|
+| **LocalClassifier** | Is user living in Russia/Ukraine? | language detection, location | ~90% |
+| **NationalityClassifier** | Is user Russian/Ukrainian by nationality? | language detection, location | ~96% |
+| **PrivateClassifier** | Is user private individual or organization? | followers, following, TF-IDF (name/bio) | ~87% |
 
-test 123
-another tedt
-snothr
+## Repository Structure
+
+```
+├── ML/
+│   ├── classifiers/
+│   │   ├── local_classifier.py
+│   │   ├── nationality_classifier.py
+│   │   └── private_classifier.py
+│   ├── best_model_results/      # Experiment results (CSV)
+│   └── presentation/            # ML Pipeline presentation
+├── lib/
+│   ├── generate_features.py     # Feature extraction pipeline
+│   ├── translate.py             # Translation + language detection
+│   ├── classify_location.py     # Location classification (LLM)
+│   └── Outputs/                 # Processed data files
+└── Russia/, Ukraine/            # Raw labeled data
+```
+
+## Quick Start
+
+```python
+from ML.classifiers import LocalClassifier, NationalityClassifier, PrivateClassifier
+
+# Run experiments
+classifier = LocalClassifier(country='Russia')
+classifier.run_all_experiments()
+classifier.save_results()
+```
