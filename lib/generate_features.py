@@ -3,7 +3,6 @@ import pandas as pd
 
 from lib.translate import Translator
 from lib.classify_location import ClassifyLocation
-from helper_dict import helper_dictionary
 from lib.clean_features import FeatureCleaner
 
 
@@ -30,10 +29,8 @@ class GenerateFeatures:
         excel_path = project_dir / COUNTRY_MAPPING[self.country]
         self.df = pd.read_excel(excel_path)
 
-        helper_dictionary.update(helper_dict)
-
         self.translator = Translator(self.df, NEED_TRANSLATION)
-        self.location_classifier = ClassifyLocation(df=self.df, token=token, helper_dict=helper_dictionary)
+        self.location_classifier = ClassifyLocation(df=self.df, token=token, helper_dict=helper_dict)
 
     def _filter_out_known_usernames(self) -> pd.DataFrame:
         """
